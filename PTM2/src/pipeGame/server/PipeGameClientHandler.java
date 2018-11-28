@@ -58,7 +58,15 @@ public class PipeGameClientHandler implements ClientHandler{
 		out.flush();
 		out.close();
 		in.close();
-		
+		while(true) {
+			try {
+				Thread.sleep(1000);
+				System.out.println(Thread.currentThread().getId()+" is still awake. total theads:"+Thread.activeCount());
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 
 }

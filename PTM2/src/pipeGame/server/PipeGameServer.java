@@ -1,5 +1,7 @@
 package pipeGame.server;
-
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -47,17 +49,25 @@ public class PipeGameServer implements Server {
 	private void run(ClientHandler clientHandler) {
 		
 		while (!this.stop) {
-			try {
-				Socket socket = server.accept();
-				BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-				PrintWriter out = new PrintWriter(socket.getOutputStream());
-				
-				clientHandler.handleClient(in, out);
-				//socket.getInputStream().close();
-				//socket.getOutputStream().close();
-				socket.close();
-			} catch (IOException e) {}
-			
+				try {
+					Socket socket = server.accept();
+					new Thread(()->{
+					try {
+						BufferedReader in;
+						in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+						PrintWriter out = new PrintWriter(socket.getOutputStream());
+						
+						clientHandler.handleClient(in, out);
+						//socket.getInputStream().close();
+						//socket.getOutputStream().close();
+						socket.close();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+					}).start();
+				} catch (IOException e) {}
 		}
 		try {
 			server.close();
