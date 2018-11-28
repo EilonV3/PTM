@@ -18,12 +18,19 @@ public class PipeGameServer implements Server {
 	private int port;
 	private ServerSocket server;
 	private volatile boolean stop;
+    private PriorityExecutorService<PipeGameTask> priorityExecutorService;
+    //Create PipeGameTask!!!
 	
 	public PipeGameServer(int port) {
 		this.port = port;
 		this.server = null;
 		this.stop = true;
 		//System.out.println("Ready to start!");
+		
+		priorityExecutorService =
+				new PriorityExecutorService<>(
+						Executors.newCachedThreadPool(4),
+                        	new PriorityBlockingQueue<>());
 	}
 	
 	@Override
@@ -57,24 +64,25 @@ public class PipeGameServer implements Server {
 						in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 						PrintWriter out = new PrintWriter(socket.getOutputStream());
 						
-						clientHandler.handleClient(in, out);
-						//socket.getInputStream().close();
-						//socket.getOutputStream().close();
-						socket.close();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					
+						try {
+							int VarToPrior = in.readLine().length();
+							
+	                        socketInputStream.reset();
+	
+							priorityExecutorService.add(new PipeGameTask(( -> ) {
+								try {
+									clientHandler.handleClient(in, out);
+									//socket.getInputStream().close();
+									//socket.getOutputStream().close();
+									socket.close();
+								} catch(IOException ignored) {}
+							}, VarToPrior));
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
 					}).start();
 				} catch (IOException e) {}
-		}
-		try {
-			server.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+				server.close();
 	}
 
 	@Override
